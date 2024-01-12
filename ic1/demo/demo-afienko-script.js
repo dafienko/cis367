@@ -8,7 +8,7 @@ import fragment_source from "./shaders/fragment.js";
 const canvas = document.getElementById('gl-canvas');
 const gl = WebGLUtils.setupWebGL(canvas);
 if (!gl) { 
-	alert('WebGL unavailable'); 
+	throw new Error('WebGL unavailable'); 
 }
 
 const onResize = () => {

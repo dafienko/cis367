@@ -1,3 +1,5 @@
+// Damien Afienko
+
 function compileShader(gl, source, type) {
 	const shader = gl.createShader(type);
 	gl.shaderSource(shader, source);
