@@ -1,0 +1,25 @@
+.title {
+	position: absolute;
+	top: 0;
+	left: 0;
+	margin: 20px;
+
+	h1, h2 {
+		margin: 0;
+		margin-bottom: 20px;
+	}
+}
+
+.projects {
+	position: absolute;
+	bottom: 0;
+	right: 0;
+
+	text-align: right;
+	padding-right: 20px;
+	padding-bottom: 20px;
+
+	ul {
+		margin: 0;
+	}
+}
