@@ -8,7 +8,7 @@ import fragment_source from "./shaders/fragment.js";
 const canvas = document.getElementById('gl-canvas');
 const gl = WebGLUtils.setupWebGL(canvas);
 if (!gl) { 
-	throw new Error('WebGL unavailable'); 
+	throw new Error('WebGL unavailable');
 }
 
 const onResize = () => {
@@ -28,7 +28,6 @@ const VERTICES = [
 gl.clearColor(1.0, 1.0, 1.0, 1.0);
 
 const program = createShaderProgram(gl, vertex_source, fragment_source);
-gl.useProgram(program);
 
 const bufferID = gl.createBuffer();
 gl.bindBuffer(gl.ARRAY_BUFFER, bufferID);
@@ -39,4 +38,5 @@ gl.vertexAttribPointer(vPosition, 2, gl.FLOAT, false, 0, 0);
 gl.enableVertexAttribArray(vPosition);
 
 gl.clear(gl.COLOR_BUFFER_BIT);
+gl.useProgram(program);
 gl.drawArrays(gl.TRIANGLES, 0, 3);
