@@ -17,7 +17,11 @@ void main() {
 	if (gl_VertexID % 2 == 0) {
 		gl_Position = vec4(root.xy, 0.0, 1.0); 
 	} else {
-		vec2 displayDir = dir * min(1.0, length(dir));
+		vec2 displayDir = dir;
+		float l = length(dir);
+		if (l > 1.0) {
+			displayDir = normalize(dir) * min(1.0, length(dir));
+		}
 		gl_Position = vec4(root.xy + displayDir * vecSize, 0.0, 1.0); 
 	}
 }

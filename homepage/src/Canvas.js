@@ -8,12 +8,14 @@ import FullScreenQuad from './Quad.js';
 
 const clamp = (x, min, max) => Math.max(min, Math.min(max, x));
 
+const dt = .1;
+
 var simulation, vectorField;
 const render = (gl) => {
 	gl.clear(gl.COLOR_BUFFER_BIT);
 	gl.disable(gl.DEPTH_TEST);
 
-	simulation.update(.1);
+	simulation.update(dt);
 	simulation.render();
 	vectorField.render();
 }
@@ -35,7 +37,7 @@ const init = (setCellData) => {
 		simulation.N, simulation.N,
 		new Float32Array([-1 + cellSize[0] * 1.5, -1 + cellSize[1] * 1.5]), 
 		new Float32Array([1 - cellSize[0] * 1.5, 1 - cellSize[1] * 1.5]),
-		new Float32Array([cellSize[0] * .6, cellSize[1] * .6]),
+		new Float32Array([cellSize[0] * .7, cellSize[1] * .7]),
 		(x, y) => simulation.getVelocity(x + 1, y + 1)
 	);
 	
@@ -78,7 +80,7 @@ const init = (setCellData) => {
 	});
 
 	document.getElementById("updateButton").onclick = () => {
-		simulation.update(.02);
+		simulation.update(dt);
 	};
 
 	document.addEventListener('contextmenu', event => event.preventDefault());
