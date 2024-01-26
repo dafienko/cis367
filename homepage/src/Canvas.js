@@ -2,9 +2,9 @@ import React, { useEffect, useState } from 'react';
 
 import './Canvas.css';
 
-import FluidSimulator from './FluidSimulator';
-import VectorField from './VectorField';
-import FullScreenQuad from './Quad';
+import FluidSimulator from './FluidSimulator.js';
+import VectorField from './VectorField.js';
+import FullScreenQuad from './Quad.js';
 
 const clamp = (x, min, max) => Math.max(min, Math.min(max, x));
 
@@ -15,15 +15,29 @@ const render = (gl) => {
 
 	simulation.update(.1);
 	simulation.render();
-	// vectorField.render();
+	vectorField.render();
 }
 
 const init = (setCellData) => {
 	const canvas = document.getElementById('mainCanvas');
-	const gl = canvas.getContext("webgl");
+	const gl = canvas.getContext("webgl2");
 	if (!gl) { 
 		throw new Error('WebGL unavailable'); 
 	}
+	
+	FullScreenQuad.init(gl);
+
+	simulation = new FluidSimulator(gl);
+	
+	const cellSize = [2.0 / (simulation.N + 2), 2.0 / (simulation.N + 2)];
+	vectorField = new VectorField(
+		gl, 
+		simulation.N, simulation.N,
+		new Float32Array([-1 + cellSize[0] * 1.5, -1 + cellSize[1] * 1.5]), 
+		new Float32Array([1 - cellSize[0] * 1.5, 1 - cellSize[1] * 1.5]),
+		new Float32Array([cellSize[0] * .6, cellSize[1] * .6]),
+		(x, y) => simulation.getVelocity(x + 1, y + 1)
+	);
 	
 	const onResize = () => {
 		canvas.width = window.innerWidth;
@@ -32,11 +46,6 @@ const init = (setCellData) => {
 	}
 	window.onresize = onResize
 	onResize()
-
-	FullScreenQuad.init(gl);
-
-	simulation = new FluidSimulator(gl);
-	vectorField = new VectorField(gl, simulation.N, simulation.N);
 
 	gl.clearColor(0.1, 0.1, 0.1, 1.0);
 

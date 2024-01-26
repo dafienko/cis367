@@ -158,6 +158,10 @@ class FluidSimulator {
 		advect(dt, 2, this.v, this.prevv, this.prevu, this.prevv)
 	}
 
+	getVelocity(x, y) {
+		return [this.u[IX(x, y)], this.v[IX(x, y)]];
+	}
+
 	getCellData(x, y) {
 		return [
 			x, y,
@@ -165,13 +169,13 @@ class FluidSimulator {
 			this.dens[IX(x, y)].toFixed(2),
 			this.u[IX(x, y)].toFixed(2),
 			this.v[IX(x, y)].toFixed(2),
-		]
+		];
 	}
 
 	update(dt) {
 		this.updateDensity(dt); 
 		this.updateVelocity(dt);
-		this.count += 1
+		this.count += 1;
 	}
 
 	render() {
