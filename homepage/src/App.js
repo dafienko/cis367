@@ -5,19 +5,19 @@ import ProjectLink from './ProjectLink';
 
 function App() {
 	return (<div className="App">
-		<div className='title'>
+		{/* <div className='title'>
 			<h1>Damien Afienko CIS367</h1>
 			<h2>Computer Graphics</h2>
-		</div>
+		</div> */}
 		
-		<div className='projects'>
+		{/* <div className='projects'>
 			<h3>Projects</h3>
 			<ul>
 				<ProjectLink name="project1" />
 				<ProjectLink name="project2" />
 				<ProjectLink name="project3" />
 			</ul>
-		</div>
+		</div> */}
 
 		<Canvas />
 	</div>);
