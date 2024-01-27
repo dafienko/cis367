@@ -5,19 +5,24 @@ import './Canvas.css';
 import FluidSimulator from './FluidSimulator.js';
 import VectorField from './VectorField.js';
 import FullScreenQuad from './Quad.js';
+import GPUFluidSimulator from './GPUFluidSimulator.js';
 
 const clamp = (x, min, max) => Math.max(min, Math.min(max, x));
 
 const dt = .1;
 
 var simulation, vectorField;
+var gpusim;
 const render = (gl) => {
 	gl.clear(gl.COLOR_BUFFER_BIT);
 	gl.disable(gl.DEPTH_TEST);
 
-	simulation.update(dt);
-	simulation.render();
-	vectorField.render();
+	// simulation.update(dt);
+	// simulation.render();
+	// vectorField.render();
+
+	gpusim.update(dt);
+	gpusim.render();
 }
 
 const init = (setCellData) => {
@@ -29,6 +34,7 @@ const init = (setCellData) => {
 	
 	FullScreenQuad.init(gl);
 
+	gpusim = new GPUFluidSimulator(gl, window.innerWidth, window.innerHeight);
 	simulation = new FluidSimulator(gl);
 	
 	const cellSize = [2.0 / (simulation.N + 2), 2.0 / (simulation.N + 2)];
@@ -45,6 +51,7 @@ const init = (setCellData) => {
 		canvas.width = window.innerWidth;
 		canvas.height = window.innerHeight;
 		gl.viewport(0, 0, window.innerWidth, window.innerHeight);
+		gpusim.setSize(canvas.width, canvas.height);
 	}
 	window.onresize = onResize
 	onResize()
@@ -57,30 +64,41 @@ const init = (setCellData) => {
 	}
 	frame()
 
+	// const screenToGrid = (x, y) => {
+	// 	return [
+	// 		clamp(Math.floor(x / (canvas.width / (simulation.N + 2))), 0, simulation.N+1),
+	// 		clamp(Math.floor((canvas.height - y) / (canvas.height / (simulation.N + 2))), 0, simulation.N+1)
+	// 	];
+	// }
+
 	const screenToGrid = (x, y) => {
 		return [
-			clamp(Math.floor(x / (canvas.width / (simulation.N + 2))), 0, simulation.N+1),
-			clamp(Math.floor((canvas.height - y) / (canvas.height / (simulation.N + 2))), 0, simulation.N+1)
+			clamp(x, 0, canvas.width - 1),
+			clamp(canvas.height - y, 0, canvas.height - 1)
 		];
 	}
 
 	document.addEventListener("mousemove", (e) => {
 		const [x, y] = screenToGrid(e.x, e.y);
-		simulation.paintAt = [x, y];
-		setCellData(simulation.getCellData(x, y));
+		// simulation.paintAt = [x, y];
+		gpusim.mousePos = [x, y];
+		// setCellData(simulation.getCellData(x, y));
 	});
 
 	document.addEventListener("mouseup", (e) => {
-		simulation.painting = false;
+		// simulation.painting = false;
+		gpusim.mouseDown = false;
 	});
 
 	document.addEventListener("mousedown", (e) => {
-		simulation.paintAt = screenToGrid(e.x, e.y);
-		simulation.painting = true;
+		// simulation.paintAt = screenToGrid(e.x, e.y);
+		// simulation.painting = true;
+		gpusim.mouseDown = true;
 	});
 
 	document.getElementById("updateButton").onclick = () => {
-		simulation.update(dt);
+		// simulation.update(dt);
+		gpusim.update(dt);
 	};
 
 	document.addEventListener('contextmenu', event => event.preventDefault());

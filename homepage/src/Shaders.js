@@ -4,6 +4,7 @@ export default {
 		gl.shaderSource(shader, source);
 		gl.compileShader(shader);
 		if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+			console.log(source);
 			throw new Error(gl.getShaderInfoLog(shader));
 		}
 	

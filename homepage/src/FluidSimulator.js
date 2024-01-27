@@ -2,7 +2,7 @@ import FullScreenQuad from './Quad';
 
 const N = 80;
 const SIZE = Math.pow(N + 2, 2);
-const DENS_DIFF = 0.000;
+const DENS_DIFF = 0.0001;
 const VEL_DIFF = 1.7;
 
 const clamp = (x, min, max) => Math.max(min, Math.min(max, x));
@@ -102,7 +102,6 @@ function project(u, v) {
 
 class FluidSimulator {
 	constructor(gl) {
-		this.count = 0;
 		this.N = N;
 		this.gl = gl;
 		this.painting = false;
@@ -150,10 +149,6 @@ class FluidSimulator {
 	}
 
 	addDensitySource(dt) {
-		if (this.count < 10) {
-			this.dens[IX(1, 18)] = 10.0;
-		}
-		
 		if (this.painting) {
 			const R = 1;
 			for (let x = Math.max(1, this.paintAt[0]-R); x <= Math.min(this.paintAt[0]+R, N); x++) {
@@ -165,10 +160,6 @@ class FluidSimulator {
 	}
 
 	addVelocitySource(dt) {
-		if (this.count < 10) {
-			this.u[IX(1, 18)] = 70.0;
-		}
-
 		if (this.painting) {
 			const R = 2;
 			const c = this.paintAt;
@@ -234,7 +225,6 @@ class FluidSimulator {
 	update(dt) {
 		this.updateDensity(dt); 
 		this.updateVelocity(dt);
-		this.count += 1;
 	}
 
 	render() {
@@ -260,7 +250,7 @@ class FluidSimulator {
 			image
 		);
 
-		FullScreenQuad.render(gl)
+		FullScreenQuad.render(gl);
 	}
 }
 

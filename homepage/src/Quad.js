@@ -27,6 +27,12 @@ const FULLSCREEN_QUAD = {
 
 var vao;
 
+const renderGeometry = (gl) => {
+	gl.bindVertexArray(vao);
+	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+	gl.drawElements(gl.TRIANGLE_STRIP, FULLSCREEN_QUAD.indices.length, gl.UNSIGNED_SHORT, 0);
+}
+
 export default {
 	init: function(gl) {
 		quadProgram = Shaders.compileProgram(gl, VERTEX_SOURCE, FRAGMENT_SOURCE);
@@ -66,13 +72,13 @@ export default {
 	render: function(gl) {
 		gl.useProgram(quadProgram);
 		gl.uniform1i(samplerLoc, 0);
-		gl.bindVertexArray(vao);
-
-		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-		gl.drawElements(gl.TRIANGLE_STRIP, FULLSCREEN_QUAD.indices.length, gl.UNSIGNED_SHORT, 0);
+		
+		renderGeometry(gl);
 
 		gl.useProgram(null);
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
 		gl.bindVertexArray(null);
-	}
+	},
+
+	renderGeometry: renderGeometry,
 }
