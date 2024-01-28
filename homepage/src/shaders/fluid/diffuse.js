@@ -12,15 +12,15 @@ uniform float a;
 out vec4 res;
 
 void main() {
-	vec2 pos = getPos();
+	ivec2 pos = getPos();
 	
-	if (pos.x < 0.5 || pos.x > gridSize.x - .5 || pos.y < .5 || pos.y > gridSize.y - .5) {
+	if (pos.x == 0 || pos.x == int(gridSize.x) - 1 || pos.y == 0 || pos.y == int(gridSize.y) - 1) {
 		res = vec4(0.0, 0.0, 0.0, 1.0);
 	} else {
-		vec4 up = sampleGrid(current, pos + vec2(0, 1));
-		vec4 down = sampleGrid(current, pos + vec2(0, -1));
-		vec4 left = sampleGrid(current, pos + vec2(1, 0));
-		vec4 right = sampleGrid(current, pos + vec2(-1, 0));
+		vec4 up = sampleGrid(current, pos + ivec2(0, 1));
+		vec4 down = sampleGrid(current, pos + ivec2(0, -1));
+		vec4 left = sampleGrid(current, pos + ivec2(1, 0));
+		vec4 right = sampleGrid(current, pos + ivec2(-1, 0));
 		res = (sampleGrid(prev, pos) + a * (up + down + left + right)) / (1.0 + 4.0 * a);
 	}
 }

@@ -9,7 +9,9 @@ import GPUFluidSimulator from './GPUFluidSimulator.js';
 
 const clamp = (x, min, max) => Math.max(min, Math.min(max, x));
 
-const dt = .1;
+const dt = .02;
+
+const factor = .5;
 
 var simulation, vectorField;
 var gpusim;
@@ -22,6 +24,8 @@ const render = (gl) => {
 	// vectorField.render();
 
 	gpusim.update(dt);
+
+	gl.viewport(0, 0, window.innerWidth, window.innerHeight);
 	gpusim.render();
 }
 
@@ -31,10 +35,12 @@ const init = (setCellData) => {
 	if (!gl) { 
 		throw new Error('WebGL unavailable'); 
 	}
+	gl.getExtension('EXT_color_buffer_float');
+	gl.getExtension('WEBGL_color_buffer_float');
 	
 	FullScreenQuad.init(gl);
 
-	gpusim = new GPUFluidSimulator(gl, window.innerWidth, window.innerHeight);
+	gpusim = new GPUFluidSimulator(gl, Math.floor(window.innerWidth * factor), Math.floor(window.innerHeight * factor));
 	simulation = new FluidSimulator(gl);
 	
 	const cellSize = [2.0 / (simulation.N + 2), 2.0 / (simulation.N + 2)];
@@ -51,7 +57,7 @@ const init = (setCellData) => {
 		canvas.width = window.innerWidth;
 		canvas.height = window.innerHeight;
 		gl.viewport(0, 0, window.innerWidth, window.innerHeight);
-		gpusim.setSize(canvas.width, canvas.height);
+		gpusim.setSize(Math.floor(canvas.width * factor), Math.floor(canvas.height * factor));
 	}
 	window.onresize = onResize
 	onResize()
@@ -81,7 +87,7 @@ const init = (setCellData) => {
 	document.addEventListener("mousemove", (e) => {
 		const [x, y] = screenToGrid(e.x, e.y);
 		// simulation.paintAt = [x, y];
-		gpusim.mousePos = [x, y];
+		gpusim.mousePos = [Math.floor(x * factor), Math.floor(y * factor)];
 		// setCellData(simulation.getCellData(x, y));
 	});
 

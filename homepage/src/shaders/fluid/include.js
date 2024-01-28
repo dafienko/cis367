@@ -8,11 +8,11 @@ uniform vec2 gridSize;
 
 in vec2 uv;
 
-vec2 getPos() {
-	return uv * gridSize;
+ivec2 getPos() {
+	return ivec2(int(gl_FragCoord.x), int(gl_FragCoord.y));
 }
 
-vec4 sampleGrid(in sampler2D tex, vec2 pos) {
-	return texture(dens, pos / gridSize);
+vec4 sampleGrid(in sampler2D tex, ivec2 pos) {
+	return texelFetch(tex, pos, 0);
 }
 `;
