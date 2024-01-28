@@ -51,7 +51,7 @@ function advect(dt, type, next, initial, u, v) {
 			const vel = [u[IX(x, y)], v[IX(x, y)]];
 			const p0 = [x - vel[0] * dt, y - vel[1] * dt];
 			const i = clamp(Math.floor(p0[0]), 0, N), j = clamp(Math.floor(p0[1]), 0, N);
-			const w = p0[0] - i, z = p0[1] - j
+			const w = p0[0] - i, z = p0[1] - j;
 			const a = initial[IX(i, j)];
 			const b = initial[IX(i + 1, j)];
 			const c = initial[IX(i, j + 1)];

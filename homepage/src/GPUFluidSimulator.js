@@ -4,8 +4,9 @@ import Shaders from './Shaders.js';
 import TEXTURE_VERTEX_SOURCE from "./shaders/fluid/textureVertex.js";
 import ADD_SOURCE_FRAGMENT_SOURCE from "./shaders/fluid/addSourceFragment.js";
 import DIFFUSE_FRAGMENT_SOURCE from "./shaders/fluid/diffuse.js";
+import ADVECT_FRAGMENT_SOURCE from "./shaders/fluid/advect.js";
 
-const DENS_DIFF = .1;
+const DENS_DIFF = 0.001;
 
 function createTextureFramebuffer(gl) {
 	const texture = gl.createTexture();
@@ -26,10 +27,11 @@ function createTextureFramebuffer(gl) {
 }
 
 let initialized = false;
-var addDensitySourceProgram, diffuseProgram;
+var addDensitySourceProgram, diffuseProgram, advectProgram;
 function initialize(gl) {
 	addDensitySourceProgram = Shaders.compileProgram(gl, TEXTURE_VERTEX_SOURCE, ADD_SOURCE_FRAGMENT_SOURCE);
 	diffuseProgram = Shaders.compileProgram(gl, TEXTURE_VERTEX_SOURCE, DIFFUSE_FRAGMENT_SOURCE);
+	advectProgram = Shaders.compileProgram(gl, TEXTURE_VERTEX_SOURCE, ADVECT_FRAGMENT_SOURCE);
 
 	initialized = true;
 }
@@ -152,11 +154,30 @@ class GPUFluidSimulator {
 		}
 	}
 
+	advectDensity(dt) {
+		const gl = this.gl;
+		
+		gl.useProgram(advectProgram);
+		this._setFluidUniforms(advectProgram);
+		gl.uniform1i(gl.getUniformLocation(advectProgram, "current"), 0);
+		gl.uniform2f(gl.getUniformLocation(advectProgram, "dt0"), this.w * dt, this.h * dt);
+
+		gl.activeTexture(gl.TEXTURE0);
+		gl.bindTexture(gl.TEXTURE_2D, this.dens[(this.densIndex + 0) % 3][0]);
+		
+		gl.bindFramebuffer(gl.FRAMEBUFFER, this.dens[(this.densIndex + 2) % 3][1]);
+		FullScreenQuad.renderGeometry(gl);
+		gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+		this.densIndex = (this.densIndex + 2) % 3;
+	}
+
 	update(dt) {
 		const gl = this.gl;
 
 		this.addDensitySource(dt);
 		this.diffuseDensity(dt);
+		this.advectDensity(dt);
 	}
 
 	render() {
