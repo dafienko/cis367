@@ -13,7 +13,7 @@ out vec4 res;
 void main() {
 	ivec2 pos = getPos();
 	
-	if (pos.x == 0 || pos.x == int(gridSize.x) - 1 || pos.y == 0 || pos.y == int(gridSize.y) - 1) {
+	if (onBoundary(pos)) {
 		res = vec4(0.0, 0.0, 0.0, 1.0);
 	} else {
 		vec2 p = vec2(floor(gl_FragCoord.x), floor(gl_FragCoord.y));

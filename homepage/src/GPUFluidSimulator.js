@@ -6,9 +6,10 @@ import ADD_DENSITY_SOURCE_FRAGMENT_SOURCE from "./shaders/fluid/addDensitySource
 import ADD_VELOCITY_SOURCE_FRAGMENT_SOURCE from "./shaders/fluid/addVelocitySourceFragment.js";
 import DIFFUSE_FRAGMENT_SOURCE from "./shaders/fluid/diffuse.js";
 import ADVECT_FRAGMENT_SOURCE from "./shaders/fluid/advect.js";
+import PROJECT_FRAGMENT_SOURCE from "./shaders/fluid/project.js";
 
-const DENS_DIFF = 0.000;
-const VEL_DIFF = 0.001;
+const DENS_DIFF = 0.00001;
+const VEL_DIFF = 0.00;
 
 function createTextureFramebuffer(gl) {
 	const texture = gl.createTexture();
@@ -29,12 +30,13 @@ function createTextureFramebuffer(gl) {
 }
 
 let initialized = false;
-var addDensitySourceProgram, addVelocitySourceProgram, diffuseProgram, advectProgram;
+var addDensitySourceProgram, addVelocitySourceProgram, diffuseProgram, advectProgram, projectProgram;
 function initialize(gl) {
 	addDensitySourceProgram = Shaders.compileProgram(gl, TEXTURE_VERTEX_SOURCE, ADD_DENSITY_SOURCE_FRAGMENT_SOURCE);
 	addVelocitySourceProgram = Shaders.compileProgram(gl, TEXTURE_VERTEX_SOURCE, ADD_VELOCITY_SOURCE_FRAGMENT_SOURCE);
 	diffuseProgram = Shaders.compileProgram(gl, TEXTURE_VERTEX_SOURCE, DIFFUSE_FRAGMENT_SOURCE);
 	advectProgram = Shaders.compileProgram(gl, TEXTURE_VERTEX_SOURCE, ADVECT_FRAGMENT_SOURCE);
+	projectProgram = Shaders.compileProgram(gl, TEXTURE_VERTEX_SOURCE, PROJECT_FRAGMENT_SOURCE);
 
 	initialized = true;
 }
@@ -55,15 +57,22 @@ class GPUFluidSimulator {
 			createTextureFramebuffer(gl),
 			createTextureFramebuffer(gl),
 			createTextureFramebuffer(gl),
-		]
+		];
 		this.densIndex = 0;
 
 		this.vel = [
 			createTextureFramebuffer(gl),
 			createTextureFramebuffer(gl),
 			createTextureFramebuffer(gl),
-		]
+		];
 		this.velIndex = 0;
+
+		this.divp = [
+			createTextureFramebuffer(gl),
+			createTextureFramebuffer(gl),
+			createTextureFramebuffer(gl),
+		];
+		this.divpIndex = 0;
 
 		this.setSize(w, h);
 	}
@@ -98,7 +107,7 @@ class GPUFluidSimulator {
 	setSize(w, h) {
 		const gl = this.gl;
 		
-		for (let arr of [this.dens, this.vel]) {
+		for (let arr of [this.dens, this.vel, this.divp]) {
 			for (let pair of arr) {
 				gl.bindTexture(gl.TEXTURE_2D, pair[0]);
 				gl.texImage2D(
@@ -131,9 +140,9 @@ class GPUFluidSimulator {
 
 		gl.bindFramebuffer(gl.FRAMEBUFFER, this.dens[(this.densIndex + 2) % 3][1])
 		FullScreenQuad.renderGeometry(gl);
-		gl.bindFramebuffer(gl.FRAMEBUFFER, null)
-
 		this.densIndex = (this.densIndex + 2) % 3;
+		
+		gl.bindFramebuffer(gl.FRAMEBUFFER, null)
 	}
 
 	diffuseDensity(dt) {
@@ -154,9 +163,9 @@ class GPUFluidSimulator {
 			
 			gl.bindFramebuffer(gl.FRAMEBUFFER, this.dens[(this.densIndex + 2) % 3][1]);
 			FullScreenQuad.renderGeometry(gl);
-			gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-
 			this.densIndex = (this.densIndex + 2) % 3;
+			
+			gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 		}
 	}
 
@@ -174,9 +183,9 @@ class GPUFluidSimulator {
 		
 		gl.bindFramebuffer(gl.FRAMEBUFFER, this.dens[(this.densIndex + 2) % 3][1]);
 		FullScreenQuad.renderGeometry(gl);
-		gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-
 		this.densIndex = (this.densIndex + 2) % 3;
+		
+		gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 	}
 
 	addVelocitySource(dt) {
@@ -196,9 +205,9 @@ class GPUFluidSimulator {
 		
 		gl.bindFramebuffer(gl.FRAMEBUFFER, this.vel[(this.velIndex + 2) % 3][1])
 		FullScreenQuad.renderGeometry(gl);
-		gl.bindFramebuffer(gl.FRAMEBUFFER, null)
-
 		this.velIndex = (this.velIndex + 2) % 3;
+		
+		gl.bindFramebuffer(gl.FRAMEBUFFER, null)
 	}
 
 	diffuseVelocity(dt) {
@@ -219,10 +228,10 @@ class GPUFluidSimulator {
 			
 			gl.bindFramebuffer(gl.FRAMEBUFFER, this.vel[(this.velIndex + 2) % 3][1]);
 			FullScreenQuad.renderGeometry(gl);
-			gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-
 			this.velIndex = (this.velIndex + 2) % 3;
 		}
+
+		gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 	}
 
 	advectVelocity(dt) {
@@ -238,9 +247,54 @@ class GPUFluidSimulator {
 		
 		gl.bindFramebuffer(gl.FRAMEBUFFER, this.vel[(this.velIndex + 2) % 3][1]);
 		FullScreenQuad.renderGeometry(gl);
-		gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-
 		this.velIndex = (this.velIndex + 2) % 3;
+		
+		gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+	}
+
+	/*
+uniform sampler2D input;
+
+uniform float h;
+uniform int pass;
+	*/
+
+	project(dt) {
+		const gl = this.gl;
+
+		gl.useProgram(projectProgram);
+		this._setFluidTextures();
+		this._setFluidUniforms(projectProgram);
+		gl.uniform1f(gl.getUniformLocation(projectProgram, "h"), 1 / Math.min(this.w, this.h));
+		gl.uniform1i(gl.getUniformLocation(projectProgram, "pass"), 0);
+
+		gl.bindFramebuffer(gl.FRAMEBUFFER, this.divp[(this.divpIndex + 2) % 3][1]);
+		FullScreenQuad.renderGeometry(gl);
+		this.divpIndex = (this.divpIndex + 2) % 3;
+
+
+		gl.uniform1i(gl.getUniformLocation(projectProgram, "pass"), 1);
+		gl.uniform1i(gl.getUniformLocation(projectProgram, "inputTexture"), 4);
+		for (let i = 0; i < 20; i++) {
+			gl.activeTexture(gl.TEXTURE4);
+			gl.bindTexture(gl.TEXTURE_2D, this.divp[this.divpIndex][0]);
+
+			gl.bindFramebuffer(gl.FRAMEBUFFER, this.divp[(this.divpIndex + 2) % 3][1]);
+			FullScreenQuad.renderGeometry(gl);
+			this.divpIndex = (this.divpIndex + 2) % 3;
+		}
+
+
+		gl.uniform1i(gl.getUniformLocation(projectProgram, "pass"), 2);
+		
+		gl.activeTexture(gl.TEXTURE4);
+		gl.bindTexture(gl.TEXTURE_2D, this.divp[this.divpIndex][0]);
+
+		gl.bindFramebuffer(gl.FRAMEBUFFER, this.vel[(this.velIndex + 2) % 3][1]);
+		FullScreenQuad.renderGeometry(gl);
+		this.velIndex = (this.velIndex + 2) % 3;
+
+		gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 	}
 
 	update(dt) {
@@ -254,6 +308,7 @@ class GPUFluidSimulator {
 		this.addVelocitySource(dt);
 		this.diffuseVelocity(dt);
 		this.advectVelocity(dt);
+		this.project(dt);
 
 		this.init = 0
 	}
@@ -266,6 +321,7 @@ class GPUFluidSimulator {
 		gl.activeTexture(gl.TEXTURE0);
 		gl.bindTexture(gl.TEXTURE_2D, this.vel[(this.velIndex + 0) % 3][0]);
 		gl.bindTexture(gl.TEXTURE_2D, this.dens[(this.densIndex + 0) % 3][0]);
+		// gl.bindTexture(gl.TEXTURE_2D, this.divp[(this.divpIndex + 0) % 3][0]);
 
 		FullScreenQuad.render(gl);
 	}

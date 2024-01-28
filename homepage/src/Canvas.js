@@ -9,7 +9,7 @@ import GPUFluidSimulator from './GPUFluidSimulator.js';
 
 const clamp = (x, min, max) => Math.max(min, Math.min(max, x));
 
-const dt = .02;
+const dt = .01;
 
 const factor = .5;
 

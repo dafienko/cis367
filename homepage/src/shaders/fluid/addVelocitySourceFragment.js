@@ -22,8 +22,8 @@ void main() {
 
 	if (addSource == 1) {
 		vec2 p = vec2(floor(gl_FragCoord.x), floor(gl_FragCoord.y));
-		if (length(sourcePos - p) < 1.0) {
-			color = vec4(0.0, 20.0, 0.0, 1.0);
+		if (length(sourcePos - p) < 4.0) {
+			color = vec4(0.0, 1.0, 0.0, 1.0);
 		}
 	}
 }
