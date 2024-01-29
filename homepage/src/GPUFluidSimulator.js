@@ -286,9 +286,17 @@ class GPUFluidSimulator {
 		this._setFluidTextures();
 
 		gl.activeTexture(gl.TEXTURE0);
-		gl.bindTexture(gl.TEXTURE_2D, this.vel[(this.velIndex + 0) % 3][0]);
+		gl.bindTexture(gl.TEXTURE_2D, this.getDensityTexture());
 
 		FullScreenQuad.render(gl);
+	}
+
+	getDensityTexture() {
+		return this.dens[this.densIndex][0];
+	}
+
+	getVelocityTexture() {
+		return this.vel[this.velIndex][0];
 	}
 }
 

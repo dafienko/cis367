@@ -60,13 +60,13 @@ export default {
 		gl.enableVertexAttribArray(uvLocation);
 		gl.vertexAttribPointer(uvLocation, 2, gl.FLOAT, false, 0, 0);
 		
-		gl.useProgram(null);
+		gl.useProgram(quadProgram);
+		samplerLoc = gl.getUniformLocation(quadProgram, "texture");	
+		
 		gl.bindBuffer(gl.ARRAY_BUFFER, null);
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
 		gl.bindVertexArray(null);
-		
-		gl.useProgram(quadProgram);
-		samplerLoc = gl.getUniformLocation(quadProgram, "texture");
+		gl.useProgram(null);
 	},
 
 	render: function(gl) {
