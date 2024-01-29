@@ -127,7 +127,50 @@ class GPUFluidSimulator {
 		this.h = h;
 	}
 
-	addDensitySource(dt) {
+	_diffuse(dt, target, targetIndexName, diff) {
+		const gl = this.gl;
+		
+		gl.useProgram(diffuseProgram);
+		this._setFluidUniforms(diffuseProgram);
+		gl.uniform1f(gl.getUniformLocation(diffuseProgram, "a"), dt * diff * this.w * this.h);
+		gl.uniform1i(gl.getUniformLocation(diffuseProgram, "current"), 0);
+		gl.uniform1i(gl.getUniformLocation(diffuseProgram, "prev"), 1);
+
+		for (let i = 0; i < 20; i++) {
+			gl.activeTexture(gl.TEXTURE0);
+			gl.bindTexture(gl.TEXTURE_2D, target[(this[targetIndexName] + 0) % 3][0]);
+
+			gl.activeTexture(gl.TEXTURE1);
+			gl.bindTexture(gl.TEXTURE_2D, target[(this[targetIndexName] + 1) % 3][0]);
+			
+			gl.bindFramebuffer(gl.FRAMEBUFFER, target[(this[targetIndexName] + 2) % 3][1]);
+			FullScreenQuad.renderGeometry(gl);
+			this[targetIndexName] = (this[targetIndexName] + 2) % 3;
+		}
+			
+		gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+	}
+
+	_advect(dt, target, targetIndexName) {
+		const gl = this.gl;
+		const dt0 = dt * Math.min(this.w, this.h);
+
+		gl.useProgram(advectProgram);
+		this._setFluidUniforms(advectProgram);
+		gl.uniform1i(gl.getUniformLocation(advectProgram, "current"), 0);
+		gl.uniform2f(gl.getUniformLocation(advectProgram, "dt0"), dt0, dt0);
+
+		gl.activeTexture(gl.TEXTURE0);
+		gl.bindTexture(gl.TEXTURE_2D, target[(this[targetIndexName] + 0) % 3][0]);
+		
+		gl.bindFramebuffer(gl.FRAMEBUFFER, target[(this[targetIndexName] + 2) % 3][1]);
+		FullScreenQuad.renderGeometry(gl);
+		this[targetIndexName] = (this[targetIndexName] + 2) % 3;
+		
+		gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+	}
+
+	_addDensitySource(dt) {
 		const gl = this.gl;
 		
 		gl.useProgram(addDensitySourceProgram);
@@ -145,50 +188,15 @@ class GPUFluidSimulator {
 		gl.bindFramebuffer(gl.FRAMEBUFFER, null)
 	}
 
-	diffuseDensity(dt) {
-		const gl = this.gl;
-		
-		gl.useProgram(diffuseProgram);
-		this._setFluidUniforms(diffuseProgram);
-		gl.uniform1f(gl.getUniformLocation(diffuseProgram, "a"), dt * DENS_DIFF * this.w * this.h);
-		gl.uniform1i(gl.getUniformLocation(diffuseProgram, "current"), 0);
-		gl.uniform1i(gl.getUniformLocation(diffuseProgram, "prev"), 1);
-
-		for (let i = 0; i < 20; i++) {
-			gl.activeTexture(gl.TEXTURE0);
-			gl.bindTexture(gl.TEXTURE_2D, this.dens[(this.densIndex + 0) % 3][0]);
-
-			gl.activeTexture(gl.TEXTURE1);
-			gl.bindTexture(gl.TEXTURE_2D, this.dens[(this.densIndex + 1) % 3][0]);
-			
-			gl.bindFramebuffer(gl.FRAMEBUFFER, this.dens[(this.densIndex + 2) % 3][1]);
-			FullScreenQuad.renderGeometry(gl);
-			this.densIndex = (this.densIndex + 2) % 3;
-			
-			gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-		}
+	_diffuseDensity(dt) {
+		this._diffuse(dt, this.dens, "densIndex", DENS_DIFF);
 	}
 
-	advectDensity(dt) {
-		const gl = this.gl;
-		
-		gl.useProgram(advectProgram);
-		this._setFluidUniforms(advectProgram);
-		gl.uniform1i(gl.getUniformLocation(advectProgram, "current"), 0);
-		let dt0 = dt * Math.min(this.w, this.h);
-		gl.uniform2f(gl.getUniformLocation(advectProgram, "dt0"), dt0, dt0);
-
-		gl.activeTexture(gl.TEXTURE0);
-		gl.bindTexture(gl.TEXTURE_2D, this.dens[(this.densIndex + 0) % 3][0]);
-		
-		gl.bindFramebuffer(gl.FRAMEBUFFER, this.dens[(this.densIndex + 2) % 3][1]);
-		FullScreenQuad.renderGeometry(gl);
-		this.densIndex = (this.densIndex + 2) % 3;
-		
-		gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+	_advectDensity(dt) {
+		this._advect(dt, this.dens, "densIndex");
 	}
 
-	addVelocitySource(dt) {
+	_addVelocitySource(dt) {
 		const gl = this.gl;
 		
 		gl.useProgram(addVelocitySourceProgram);
@@ -210,56 +218,15 @@ class GPUFluidSimulator {
 		gl.bindFramebuffer(gl.FRAMEBUFFER, null)
 	}
 
-	diffuseVelocity(dt) {
-		const gl = this.gl;
-		
-		gl.useProgram(diffuseProgram);
-		this._setFluidUniforms(diffuseProgram);
-		gl.uniform1f(gl.getUniformLocation(diffuseProgram, "a"), dt * VEL_DIFF * this.w * this.h);
-		gl.uniform1i(gl.getUniformLocation(diffuseProgram, "current"), 0);
-		gl.uniform1i(gl.getUniformLocation(diffuseProgram, "prev"), 1);
-
-		for (let i = 0; i < 20; i++) {
-			gl.activeTexture(gl.TEXTURE0);
-			gl.bindTexture(gl.TEXTURE_2D, this.vel[(this.velIndex + 0) % 3][0]);
-
-			gl.activeTexture(gl.TEXTURE1);
-			gl.bindTexture(gl.TEXTURE_2D, this.vel[(this.velIndex + 1) % 3][0]);
-			
-			gl.bindFramebuffer(gl.FRAMEBUFFER, this.vel[(this.velIndex + 2) % 3][1]);
-			FullScreenQuad.renderGeometry(gl);
-			this.velIndex = (this.velIndex + 2) % 3;
-		}
-
-		gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+	_diffuseVelocity(dt) {
+		this._diffuse(dt, this.vel, "velIndex", VEL_DIFF);
 	}
 
-	advectVelocity(dt) {
-		const gl = this.gl;
-		
-		gl.useProgram(advectProgram);
-		this._setFluidUniforms(advectProgram);
-		gl.uniform1i(gl.getUniformLocation(advectProgram, "current"), 0);
-		gl.uniform2f(gl.getUniformLocation(advectProgram, "dt0"), this.w * dt, this.h * dt);
-
-		gl.activeTexture(gl.TEXTURE0);
-		gl.bindTexture(gl.TEXTURE_2D, this.vel[(this.velIndex + 0) % 3][0]);
-		
-		gl.bindFramebuffer(gl.FRAMEBUFFER, this.vel[(this.velIndex + 2) % 3][1]);
-		FullScreenQuad.renderGeometry(gl);
-		this.velIndex = (this.velIndex + 2) % 3;
-		
-		gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+	_advectVelocity(dt) {
+		this._advect(dt, this.vel, "velIndex");
 	}
 
-	/*
-uniform sampler2D input;
-
-uniform float h;
-uniform int pass;
-	*/
-
-	project(dt) {
+	_project(dt) {
 		const gl = this.gl;
 
 		gl.useProgram(projectProgram);
@@ -301,14 +268,14 @@ uniform int pass;
 		const gl = this.gl;
 
 		gl.viewport(0, 0, this.w, this.h);
-		this.addDensitySource(dt);
-		this.diffuseDensity(dt);
-		this.advectDensity(dt);
+		this._addDensitySource(dt);
+		this._diffuseDensity(dt);
+		this._advectDensity(dt);
 		
-		this.addVelocitySource(dt);
-		this.diffuseVelocity(dt);
-		this.advectVelocity(dt);
-		this.project(dt);
+		this._addVelocitySource(dt);
+		this._diffuseVelocity(dt);
+		this._advectVelocity(dt);
+		this._project(dt);
 
 		this.init = 0
 	}
@@ -320,8 +287,6 @@ uniform int pass;
 
 		gl.activeTexture(gl.TEXTURE0);
 		gl.bindTexture(gl.TEXTURE_2D, this.vel[(this.velIndex + 0) % 3][0]);
-		gl.bindTexture(gl.TEXTURE_2D, this.dens[(this.densIndex + 0) % 3][0]);
-		// gl.bindTexture(gl.TEXTURE_2D, this.divp[(this.divpIndex + 0) % 3][0]);
 
 		FullScreenQuad.render(gl);
 	}

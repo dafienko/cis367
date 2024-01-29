@@ -1,4 +1,4 @@
-import './App.css';
+import './css/App.css';
 
 import Canvas  from './Canvas';
 import ProjectLink from './ProjectLink';
