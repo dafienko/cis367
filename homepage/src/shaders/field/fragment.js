@@ -5,12 +5,11 @@ uniform sampler2D dens;
 
 in vec2 grid;
 in vec2 uv;
+in vec4 c;
 
 out vec4 color; 
  
 void main() {
-	vec4 d = texture(dens, grid);
-	color = vec4(d.xyz, length(d.xyz));
-	// color = vec4(1, 0, 0, .2);
+	color = c;
 }
 `;

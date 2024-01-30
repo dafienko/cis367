@@ -1,10 +1,9 @@
-import FullScreenQuad from './Quad';
 import Shaders from './Shaders.js';
 
 import FIELD_VERTEX_SOURCE from "./shaders/field/vertex.js";
 import FIELD_FRAGMENT_SOURCE from "./shaders/field/fragment.js";
 
-const FULLSCREEN_QUAD = {
+const QUAD = {
 	positions: [
 		-1.0, 1.0, // top-left
 		-1.0, -1.0, // bottom-left
@@ -32,14 +31,14 @@ function initialize(gl) {
 		
 	indexBuffer = gl.createBuffer();
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(FULLSCREEN_QUAD.indices), gl.STATIC_DRAW);
+	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(QUAD.indices), gl.STATIC_DRAW);
 	
 	vao = gl.createVertexArray();
 	gl.bindVertexArray(vao);
 	
 	const vertexBuffer = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(FULLSCREEN_QUAD.positions), gl.STATIC_DRAW);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(QUAD.positions), gl.STATIC_DRAW);
 	
 	const posLocation = gl.getAttribLocation(program, 'pos');
 	gl.enableVertexAttribArray(posLocation);
@@ -47,7 +46,7 @@ function initialize(gl) {
 	
 	const uvBuffer = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
-	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(FULLSCREEN_QUAD.uvCoords), gl.STATIC_DRAW);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(QUAD.uvCoords), gl.STATIC_DRAW);
 	
 	const uvLocation = gl.getAttribLocation(program, 'uv_in');
 	gl.enableVertexAttribArray(uvLocation);
@@ -82,6 +81,7 @@ class Field {
 		gl.useProgram(program);
 		gl.uniform2iv(gl.getUniformLocation(program, "gridSize"), gridSize);
 		gl.uniform1f(gl.getUniformLocation(program, "aspect"), canvas.width / canvas.height);
+		gl.uniform2f(gl.getUniformLocation(program, "ldir"), Math.cos(this.fluid.t), Math.sin(this.fluid.t));
 		
 		gl.uniform1i(gl.getUniformLocation(program, "vel"), 0);
 		gl.activeTexture(gl.TEXTURE0);
@@ -93,7 +93,7 @@ class Field {
 
 		gl.bindVertexArray(vao);
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-		gl.drawElementsInstanced(gl.TRIANGLE_STRIP, FULLSCREEN_QUAD.indices.length, gl.UNSIGNED_SHORT, 0, gridSize[0] * gridSize[1]);
+		gl.drawElementsInstanced(gl.TRIANGLE_STRIP, QUAD.indices.length, gl.UNSIGNED_SHORT, 0, gridSize[0] * gridSize[1]);
 
 		gl.useProgram(null);
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);

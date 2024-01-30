@@ -1,15 +1,31 @@
+/*
+http://graphics.cs.cmu.edu/nsp/course/15-464/Fall09/papers/StamFluidforGames.pdf
+https://matthias-research.github.io/pages/tenMinutePhysics/17-fluidSim.pdf
+*/
+
 import FullScreenQuad from './Quad';
 import Shaders from './Shaders.js';
 
 import TEXTURE_VERTEX_SOURCE from "./shaders/fluid/textureVertex.js";
-import ADD_DENSITY_SOURCE_FRAGMENT_SOURCE from "./shaders/fluid/addDensitySourceFragment.js";
-import ADD_VELOCITY_SOURCE_FRAGMENT_SOURCE from "./shaders/fluid/addVelocitySourceFragment.js";
+import ADD_SOURCE_FRAGMENT_SOURCE from "./shaders/fluid/addSource.js";
 import DIFFUSE_FRAGMENT_SOURCE from "./shaders/fluid/diffuse.js";
 import ADVECT_FRAGMENT_SOURCE from "./shaders/fluid/advect.js";
 import PROJECT_FRAGMENT_SOURCE from "./shaders/fluid/project.js";
 
-const DENS_DIFF = 0.00001;
-const VEL_DIFF = 0.00;
+const DENS_DIFF = 0.0001;
+const VEL_DIFF = 0.0;
+const K = 16;
+
+const hslToRgb = (h, s, v) => {
+	h *= 6;
+	return [0, 2, 4].map((i) => {
+		const d = Math.min(Math.abs(h - i), Math.abs(h - (i+6)));
+		const x = 1 - Math.min(1, Math.max(0, d - 1));
+		return v * ((1 - s) + x * s);
+	});
+}
+
+const getRandomFluidColor = () => hslToRgb(Math.random(), 1, 1);
 
 function createTextureFramebuffer(gl) {
 	const texture = gl.createTexture();
@@ -30,10 +46,9 @@ function createTextureFramebuffer(gl) {
 }
 
 let initialized = false;
-var addDensitySourceProgram, addVelocitySourceProgram, diffuseProgram, advectProgram, projectProgram;
+var addSourceProgram, diffuseProgram, advectProgram, projectProgram;
 function initialize(gl) {
-	addDensitySourceProgram = Shaders.compileProgram(gl, TEXTURE_VERTEX_SOURCE, ADD_DENSITY_SOURCE_FRAGMENT_SOURCE);
-	addVelocitySourceProgram = Shaders.compileProgram(gl, TEXTURE_VERTEX_SOURCE, ADD_VELOCITY_SOURCE_FRAGMENT_SOURCE);
+	addSourceProgram = Shaders.compileProgram(gl, TEXTURE_VERTEX_SOURCE, ADD_SOURCE_FRAGMENT_SOURCE);
 	diffuseProgram = Shaders.compileProgram(gl, TEXTURE_VERTEX_SOURCE, DIFFUSE_FRAGMENT_SOURCE);
 	advectProgram = Shaders.compileProgram(gl, TEXTURE_VERTEX_SOURCE, ADVECT_FRAGMENT_SOURCE);
 	projectProgram = Shaders.compileProgram(gl, TEXTURE_VERTEX_SOURCE, PROJECT_FRAGMENT_SOURCE);
@@ -49,7 +64,11 @@ class GPUFluidSimulator {
 
 		this.gl = gl;
 		this.init = 1
+		this.t = 0;
+		this.n = 0;
+		this.color = getRandomFluidColor();
 		
+		this.mouseVel = [0, 1];
 		this.mousePos = [0, 0];
 		this.mouseDown = false;
 
@@ -122,12 +141,20 @@ class GPUFluidSimulator {
 			}
 		}
 
-		gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+		this.init = 1;
 		this.w = w;
 		this.h = h;
 	}
 
+	_renderToTargetAndCycle(target, targetIndexName) {
+		this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, target[(this[targetIndexName] + 2) % 3][1]);
+		FullScreenQuad.renderGeometry(this.gl);
+		this[targetIndexName] = (this[targetIndexName] + 2) % 3;
+	}
+
 	_diffuse(dt, target, targetIndexName, diff) {
+		if (diff <= 0) {return;}
+
 		const gl = this.gl;
 		
 		gl.useProgram(diffuseProgram);
@@ -136,16 +163,14 @@ class GPUFluidSimulator {
 		gl.uniform1i(gl.getUniformLocation(diffuseProgram, "current"), 0);
 		gl.uniform1i(gl.getUniformLocation(diffuseProgram, "prev"), 1);
 
-		for (let i = 0; i < 20; i++) {
+		for (let i = 0; i < K; i++) {
 			gl.activeTexture(gl.TEXTURE0);
 			gl.bindTexture(gl.TEXTURE_2D, target[(this[targetIndexName] + 0) % 3][0]);
 
 			gl.activeTexture(gl.TEXTURE1);
 			gl.bindTexture(gl.TEXTURE_2D, target[(this[targetIndexName] + 1) % 3][0]);
 			
-			gl.bindFramebuffer(gl.FRAMEBUFFER, target[(this[targetIndexName] + 2) % 3][1]);
-			FullScreenQuad.renderGeometry(gl);
-			this[targetIndexName] = (this[targetIndexName] + 2) % 3;
+			this._renderToTargetAndCycle(target, targetIndexName);
 		}
 			
 		gl.bindFramebuffer(gl.FRAMEBUFFER, null);
@@ -163,29 +188,38 @@ class GPUFluidSimulator {
 		gl.activeTexture(gl.TEXTURE0);
 		gl.bindTexture(gl.TEXTURE_2D, target[(this[targetIndexName] + 0) % 3][0]);
 		
-		gl.bindFramebuffer(gl.FRAMEBUFFER, target[(this[targetIndexName] + 2) % 3][1]);
-		FullScreenQuad.renderGeometry(gl);
-		this[targetIndexName] = (this[targetIndexName] + 2) % 3;
+		this._renderToTargetAndCycle(target, targetIndexName);
 		
 		gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 	}
 
-	_addDensitySource(dt) {
+	_addSource(dt, target, targetIndexName, mode, enabled, r, sourcePos, value) {
 		const gl = this.gl;
 		
-		gl.useProgram(addDensitySourceProgram);
-		gl.uniform2f(gl.getUniformLocation(addDensitySourceProgram, "sourcePos"), this.mousePos[0], this.mousePos[1]);
-		gl.uniform1i(gl.getUniformLocation(addDensitySourceProgram, "addSource"), this.mouseDown);
-		gl.uniform1i(gl.getUniformLocation(addDensitySourceProgram, "init"), this.init);
-		
-		this._setFluidUniforms(addDensitySourceProgram);
+		gl.useProgram(addSourceProgram);
+		this._setFluidUniforms(addSourceProgram);
 		this._setFluidTextures();
+		gl.uniform2fv(gl.getUniformLocation(addSourceProgram, "sourcePos"), sourcePos);
+		gl.uniform4fv(gl.getUniformLocation(addSourceProgram, "sourceValue"), value);
+		gl.uniform1i(gl.getUniformLocation(addSourceProgram, "addSource"), enabled);
+		gl.uniform1f(gl.getUniformLocation(addSourceProgram, "r"), r);
+		gl.uniform1i(gl.getUniformLocation(addSourceProgram, "init"), this.init);
+		gl.uniform1i(gl.getUniformLocation(addSourceProgram, "target"), 0);
+		gl.uniform1i(gl.getUniformLocation(addSourceProgram, "mode"), mode);
+		gl.uniform1f(gl.getUniformLocation(addSourceProgram, "t"), this.t / 10);
+		
+		gl.activeTexture(gl.TEXTURE0);
+		gl.bindTexture(gl.TEXTURE_2D, target[(this[targetIndexName] + 0) % 3][0]);
 
-		gl.bindFramebuffer(gl.FRAMEBUFFER, this.dens[(this.densIndex + 2) % 3][1])
-		FullScreenQuad.renderGeometry(gl);
-		this.densIndex = (this.densIndex + 2) % 3;
+		this._renderToTargetAndCycle(target, targetIndexName);
 		
 		gl.bindFramebuffer(gl.FRAMEBUFFER, null)
+	}
+
+	_addDensitySource(dt) {
+		this._addSource(dt, this.dens, "densIndex", 1, this.mouseDown, 4.0, this.mousePos, [
+			this.color[0], this.color[1], this.color[2], 1
+		]);
 	}
 
 	_diffuseDensity(dt) {
@@ -197,25 +231,11 @@ class GPUFluidSimulator {
 	}
 
 	_addVelocitySource(dt) {
-		const gl = this.gl;
-		
-		gl.useProgram(addVelocitySourceProgram);
-		gl.uniform2f(gl.getUniformLocation(addVelocitySourceProgram, "sourcePos"), this.mousePos[0], this.mousePos[1]);
-		gl.uniform1i(gl.getUniformLocation(addVelocitySourceProgram, "addSource"), this.mouseDown);
-		gl.uniform1i(gl.getUniformLocation(addVelocitySourceProgram, "init"), this.init);
-		
-		this._setFluidUniforms(addVelocitySourceProgram);
-		this._setFluidTextures();
-		
-		gl.activeTexture(gl.TEXTURE5);
-		gl.bindTexture(gl.TEXTURE_2D, this.vel[this.velIndex][0]);
-		gl.uniform1i(gl.getUniformLocation(addVelocitySourceProgram, "dens"), 5);
-		
-		gl.bindFramebuffer(gl.FRAMEBUFFER, this.vel[(this.velIndex + 2) % 3][1])
-		FullScreenQuad.renderGeometry(gl);
-		this.velIndex = (this.velIndex + 2) % 3;
-		
-		gl.bindFramebuffer(gl.FRAMEBUFFER, null)
+		this._addSource(dt, this.vel, "velIndex", 0, this.mouseDown, 4.0, this.mousePos, [
+			this.mouseVel[0] * dt, 
+			this.mouseVel[1] * dt,
+			0, 1
+		]);
 	}
 
 	_diffuseVelocity(dt) {
@@ -235,37 +255,69 @@ class GPUFluidSimulator {
 		gl.uniform1f(gl.getUniformLocation(projectProgram, "h"), 1 / Math.min(this.w, this.h));
 		gl.uniform1i(gl.getUniformLocation(projectProgram, "pass"), 0);
 
-		gl.bindFramebuffer(gl.FRAMEBUFFER, this.divp[(this.divpIndex + 2) % 3][1]);
-		FullScreenQuad.renderGeometry(gl);
-		this.divpIndex = (this.divpIndex + 2) % 3;
-
+		this._renderToTargetAndCycle(this.divp, "divpIndex");
 
 		gl.uniform1i(gl.getUniformLocation(projectProgram, "pass"), 1);
 		gl.uniform1i(gl.getUniformLocation(projectProgram, "inputTexture"), 4);
-		for (let i = 0; i < 20; i++) {
+		for (let i = 0; i < K; i++) {
 			gl.activeTexture(gl.TEXTURE4);
 			gl.bindTexture(gl.TEXTURE_2D, this.divp[this.divpIndex][0]);
 
-			gl.bindFramebuffer(gl.FRAMEBUFFER, this.divp[(this.divpIndex + 2) % 3][1]);
-			FullScreenQuad.renderGeometry(gl);
-			this.divpIndex = (this.divpIndex + 2) % 3;
+			this._renderToTargetAndCycle(this.divp, "divpIndex");
 		}
-
 
 		gl.uniform1i(gl.getUniformLocation(projectProgram, "pass"), 2);
 		
 		gl.activeTexture(gl.TEXTURE4);
 		gl.bindTexture(gl.TEXTURE_2D, this.divp[this.divpIndex][0]);
 
-		gl.bindFramebuffer(gl.FRAMEBUFFER, this.vel[(this.velIndex + 2) % 3][1]);
-		FullScreenQuad.renderGeometry(gl);
-		this.velIndex = (this.velIndex + 2) % 3;
+		this._renderToTargetAndCycle(this.vel, "velIndex");
 
 		gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 	}
 
 	update(dt) {
 		const gl = this.gl;
+
+		if (this.mouseDown) {
+			if (!this.wasMouseDown) {
+				this.color = getRandomFluidColor();
+			}
+		}
+		this.wasMouseDown = this.mouseDown;
+
+		this.t += dt;
+		const n = Math.ceil(this.t / 2);
+		if (this.n < n) {
+			this.n = n;
+
+			this.addColor = getRandomFluidColor();
+			
+			const side = Math.round(Math.random());
+			if (Math.round(Math.random()) == 0) {
+				this.addPos = [
+					side * this.w,
+					Math.random() * this.h
+				];
+			} else {
+				this.addPos = [
+					Math.random() * this.w,
+					side * this.h
+				];
+			}
+			
+			this.addVel = [
+				(this.w / 2) - this.addPos[0],
+				(this.h / 2) - this.addPos[1]
+			];
+			this.addVel = [
+				Math.random(),
+				Math.random()
+			];
+			const l = Math.sqrt(Math.pow(this.addVel[0], 2) + Math.pow(this.addVel[1], 2));
+			const m = .3 + Math.random() * .4;
+			this.addVel = [(this.addVel[0] / l) * m, (this.addVel[1] / l) * m];
+		}
 
 		gl.viewport(0, 0, this.w, this.h);
 		this._addDensitySource(dt);
@@ -287,6 +339,7 @@ class GPUFluidSimulator {
 
 		gl.activeTexture(gl.TEXTURE0);
 		gl.bindTexture(gl.TEXTURE_2D, this.getDensityTexture());
+		// gl.bindTexture(gl.TEXTURE_2D, this.getVelocityTexture());
 
 		FullScreenQuad.render(gl);
 	}

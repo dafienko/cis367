@@ -8,7 +8,7 @@ import Field from './Field.js';
 
 const clamp = (x, min, max) => Math.max(min, Math.min(max, x));
 
-const dt = .01;
+const dt = .008;
 const factor = .05;
 
 var gpusim, field;
@@ -21,7 +21,7 @@ const render = (gl, canvas) => {
 	gl.enable(gl.BLEND);
 	gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
 	gl.viewport(0, 0, window.innerWidth, window.innerHeight);
-	// gpusim.render();
+	
 	field.render(canvas);
 }
 
@@ -67,9 +67,23 @@ const init = (setCellData) => {
 		];
 	}
 
+	let last = [0, 0]
 	document.addEventListener("mousemove", (e) => {
 		const [x, y] = screenToGrid(e.x, e.y);
 		gpusim.mousePos = [Math.floor(x * factor), Math.floor(y * factor)];
+		
+		const current = [e.x, e.y];
+		let dp = [current[0] - last[0], current[1] - last[1]];
+		last = current;
+		const l = Math.sqrt(Math.pow(dp[0], 2) + Math.pow(dp[1], 2));
+		const max = 200;
+		if (l > 0) {
+			const newLen = Math.min(max, l);
+			dp = [(dp[0] / l) * newLen, (dp[1] / l) * newLen];
+		} else {
+			dp = [0, 0];
+		}
+		gpusim.mouseVel = [dp[0], -dp[1]];
 	});
 
 	document.addEventListener("mouseup", (e) => {
