@@ -81,6 +81,7 @@ class Field {
 		gl.useProgram(program);
 		gl.uniform2iv(gl.getUniformLocation(program, "gridSize"), gridSize);
 		gl.uniform1f(gl.getUniformLocation(program, "aspect"), canvas.width / canvas.height);
+		gl.uniform1f(gl.getUniformLocation(program, "thickness"), 1000.0 / Math.max(canvas.width, canvas.height) );
 		gl.uniform2f(gl.getUniformLocation(program, "ldir"), Math.cos(this.fluid.t), Math.sin(this.fluid.t));
 		
 		gl.uniform1i(gl.getUniformLocation(program, "vel"), 0);
