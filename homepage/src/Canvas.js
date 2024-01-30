@@ -15,7 +15,7 @@ const render = (gl, canvas, dt) => {
 	gl.clear(gl.COLOR_BUFFER_BIT);
 	gl.disable(gl.DEPTH_TEST);
 
-	gpusim.update(dt * .7);
+	gpusim.update(dt);
 
 	gl.enable(gl.BLEND);
 	gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
@@ -55,7 +55,7 @@ const init = (setCellData) => {
 
 	let lastTime = 0.0;
 	const frame = (t) => {
-		const dt = Math.min(.008, Math.max(t - lastTime, .001));
+		const dt = Math.min(.014, Math.max(t - lastTime, .004));
 		render(gl, canvas, dt);
 		window.requestAnimationFrame(frame);
 	}
