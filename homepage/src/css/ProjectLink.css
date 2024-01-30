@@ -1,4 +1,16 @@
 .projectLink {
 	list-style-type: none;
+	margin: 0;
 	margin-top: 1em;
+	transition: transform .15s ease-out;
+	font-size: large;
+
+	a {
+		color: #fffffff0;
+	}
+}
+
+
+.projectLink:hover {
+	transform: translate(0px, -2px);
 }

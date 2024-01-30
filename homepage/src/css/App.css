@@ -1,7 +1,7 @@
 .acrylic {
 	backdrop-filter: blur(10px) brightness(70%) saturate(90%);
-	box-shadow: 0 6px 20px 0 rgba(0, 0, 0, 0.19);
-	border-radius: 10px;
+	box-shadow: 0 6px 20px 0 rgba(0, 0, 0, 1.0);
+	border-radius: 20px;
 }
 
 body {
@@ -13,18 +13,26 @@ body {
 	top: 0;
 	position: absolute;
 	width: 100%;
+	height: 100%;
+	display: flex;
+	justify-content: center;
+	align-items: center;
 }
 
 .top-container {
+	min-width: 400px;
+	height: 50%;
 	margin: 20px;
-	padding: 20px;
+	padding: 40px;
 	display: flex;
-	flex-direction: row;
+	flex-direction: column;
+	align-items: center;
 	justify-content: space-between;
 }
 
 .title {
 	user-select: none;
+	text-align: center;
 
 	h1, h2 {
 		margin: 0;
@@ -35,11 +43,27 @@ body {
 		margin-bottom: 10px;
 		color: #ffffffff;
 	}
+
+}
+
+.projects {
+	min-width: 140px;
+	
+	text-align: center;
+	display: flex;
+	flex-direction: column;
+	
+	padding: 20px;
+	
+	ul {
+		margin: 0;
+		padding: 0;
+	}
 }
 
 .credits {
 	user-select: none;
-	text-align: right;
+	text-align: center;
 	display: flex;
 	flex-direction: column;
 	justify-content: space-evenly;
@@ -56,19 +80,5 @@ body {
 
 	:not(:last-child) { 
 		margin-bottom: 8px;
-	}
-}
-
-.projects {
-	position: absolute;
-	bottom: 0;
-	right: 0;
-
-	text-align: right;
-	padding-right: 20px;
-	padding-bottom: 20px;
-
-	ul {
-		margin: 0;
 	}
 }
