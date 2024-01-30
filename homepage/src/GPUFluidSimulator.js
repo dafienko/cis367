@@ -65,7 +65,6 @@ class GPUFluidSimulator {
 		this.gl = gl;
 		this.init = 1
 		this.t = 0;
-		this.n = 0;
 		this.color = getRandomFluidColor();
 		
 		this.mouseVel = [0, 1];
@@ -287,37 +286,6 @@ class GPUFluidSimulator {
 		this.wasMouseDown = this.mouseDown;
 
 		this.t += dt;
-		const n = Math.ceil(this.t / 2);
-		if (this.n < n) {
-			this.n = n;
-
-			this.addColor = getRandomFluidColor();
-			
-			const side = Math.round(Math.random());
-			if (Math.round(Math.random()) == 0) {
-				this.addPos = [
-					side * this.w,
-					Math.random() * this.h
-				];
-			} else {
-				this.addPos = [
-					Math.random() * this.w,
-					side * this.h
-				];
-			}
-			
-			this.addVel = [
-				(this.w / 2) - this.addPos[0],
-				(this.h / 2) - this.addPos[1]
-			];
-			this.addVel = [
-				Math.random(),
-				Math.random()
-			];
-			const l = Math.sqrt(Math.pow(this.addVel[0], 2) + Math.pow(this.addVel[1], 2));
-			const m = .3 + Math.random() * .4;
-			this.addVel = [(this.addVel[0] / l) * m, (this.addVel[1] / l) * m];
-		}
 
 		gl.viewport(0, 0, this.w, this.h);
 		this._addDensitySource(dt);

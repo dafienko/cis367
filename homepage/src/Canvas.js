@@ -8,15 +8,14 @@ import Field from './Field.js';
 
 const clamp = (x, min, max) => Math.max(min, Math.min(max, x));
 
-const dt = .008;
 const factor = .05;
 
 var gpusim, field;
-const render = (gl, canvas) => {
+const render = (gl, canvas, dt) => {
 	gl.clear(gl.COLOR_BUFFER_BIT);
 	gl.disable(gl.DEPTH_TEST);
 
-	gpusim.update(dt);
+	gpusim.update(dt * .5);
 
 	gl.enable(gl.BLEND);
 	gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
@@ -54,11 +53,13 @@ const init = (setCellData) => {
 
 	gl.clearColor(0, 0, 0, 1.0);
 
-	const frame = () => {
-		render(gl, canvas);
+	let lastTime = 0.0;
+	const frame = (t) => {
+		const dt = Math.min(.008, Math.max(t - lastTime, .001));
+		render(gl, canvas, dt);
 		window.requestAnimationFrame(frame);
 	}
-	frame()
+	frame(0)
 
 	const screenToGrid = (x, y) => {
 		return [
