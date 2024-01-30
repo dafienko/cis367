@@ -55,8 +55,9 @@ const init = (setCellData) => {
 
 	let lastTime = 0.0;
 	const frame = (t) => {
-		const dt = Math.min(.014, Math.max(t - lastTime, .004));
-		render(gl, canvas, dt);
+		lastTime = t;
+		const dt = Math.min(50, Math.max(t - lastTime, 1));
+		render(gl, canvas, (dt / 1000) * 7);
 		window.requestAnimationFrame(frame);
 	}
 	frame(0)
