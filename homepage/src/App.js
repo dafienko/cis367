@@ -20,12 +20,18 @@ function App() {
 					</ul>
 				</div>
 			
+				
 				<div className='credits'>
+					<a href="https://github.com/dafienko/cis367">
+						<img id="github-icon" src="./github.png" alt="HTML tutorial"/>
+					</a>
+
+					<p>Inspired by Apple <i>Drift</i></p>
 					<p>
 						<a href='http://graphics.cs.cmu.edu/nsp/course/15-464/Fall09/papers/StamFluidforGames.pdf' target='_blank'>Real-Time Fluid Dynamics for Games</a>
 					</p>
-					<p>Inspired by Apple <i>Drift</i></p>
 				</div>
+
 			</div>
 		</div>
 		
