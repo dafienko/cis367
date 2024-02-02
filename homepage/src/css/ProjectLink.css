@@ -4,6 +4,7 @@
 	margin-top: 1em;
 	transition: transform .15s ease-out;
 	font-size: large;
+	user-select: none;
 
 	a {
 		color: #fffffff0;
