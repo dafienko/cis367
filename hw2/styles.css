@@ -1,0 +1,26 @@
+
+canvas {
+	z-index: -1;
+}
+
+.controls {
+	padding: 20px;
+
+	p {
+		margin-bottom: 0;
+	}
+}
+
+#blue-controls {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	color: blue;
+}
+
+#red-controls {
+	position: absolute;
+	bottom: 0;
+	right: 0;
+	color: red;
+}
