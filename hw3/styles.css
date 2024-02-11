@@ -1,0 +1,35 @@
+
+canvas {
+	z-index: -1;
+}
+
+.anchor-point {
+	position: absolute;
+	width: 20px;
+	height: 20px;
+	z-index: 10;
+	background-color: blue;
+	cursor: pointer;
+	transform: translate(-10px, -10px);
+}
+
+.anchor-point:hover {
+	width: 30px;
+	height: 30px;
+	transform: translate(-15px, -15px);
+}
+
+#anchor1 {
+	top: 10%;
+	left: 50%;
+}
+
+#anchor2 {
+	top: 90%;
+	left: 25%;
+}
+
+#anchor3 {
+	top: 90%;
+	left: 75%;
+}
