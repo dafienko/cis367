@@ -18,8 +18,6 @@ const onResize = () => {
 window.onresize = onResize
 onResize()
 
-// const screenToGrid = (x, y) => [x - canvas.width / 2, (canvas.height - y) - (canvas.height / 2)];
-
 const anchors = Array.prototype.slice.call(document.getElementsByClassName("anchor-point"), 0);
 for (const anchor of anchors) {
 	let last = [0, 0];
@@ -51,19 +49,45 @@ function getAnchorPosition(anchor) {
 	return [p[0] - canvas.width / 2, canvas.height / 2 - p[1]];
 }
 
-// const s = new Sierpinski(gl, 8);
+const placed = []
 const tf = new TriangleFrame(gl);
+
+let iterations = 4;
+let s;
+function changeIterations(d) {
+	iterations = Math.max(0, Math.min(12, iterations + d));
+	document.getElementById('iterations').innerHTML = iterations.toString();
+	
+	if (s) {
+		s.destroy();
+	}
+	
+	s = new Sierpinski(gl, iterations);
+}
+
+document.getElementById('iterations-dec').onclick = _ => changeIterations(-1);
+document.getElementById('iterations-inc').onclick = _ => changeIterations(1);
+changeIterations(0);
+
+document.getElementById('placeButton').onclick = (_) => {
+	placed.push(s);
+	s = new Sierpinski(gl, iterations);
+}
 
 let lastTime = 0;
 const render = (t) => {
 	lastTime = t;
 
+	s.a = getAnchorPosition(anchors[0]);
+	s.b = getAnchorPosition(anchors[1]);
+	s.c = getAnchorPosition(anchors[2]);
 	tf.setVertices(anchors.flatMap(getAnchorPosition));
 	
 	gl.clearColor(0, 0, 0, 1);
 	gl.clear(gl.COLOR_BUFFER_BIT);
 
-	// s.render(canvas);
+	placed.map(p => p.render(canvas));
+	s.render(canvas);
 	tf.render(canvas);
 	
 	window.requestAnimationFrame(render);

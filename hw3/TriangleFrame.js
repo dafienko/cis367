@@ -67,7 +67,7 @@ class TriangleFrame {
 		gl.uniform3fv(gl.getUniformLocation(TriangleFrame.program, 'color'), this.color);
 		gl.uniform1f(gl.getUniformLocation(TriangleFrame.program, 'r'), this.rotation * (Math.PI / 180.0));
 		gl.uniform1f(gl.getUniformLocation(TriangleFrame.program, 's'), this.scale);
-		gl.drawArrays(gl.TRIANGLES, 0, 3);
+		gl.drawArrays(gl.LINE_LOOP, 0, 3);
 		gl.bindVertexArray(null);
 	}
 }

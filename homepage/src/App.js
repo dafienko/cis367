@@ -16,7 +16,8 @@ function App() {
 					<ul>
 						<ProjectLink link="https://student.computing.gvsu.edu/afienkod/cis367/ic1/demo/" name="Triangle" />
 						<ProjectLink link="https://student.computing.gvsu.edu/afienkod/cis367/hw1/gasket1.html" name="Gasket" />
-						<ProjectLink link="https://student.computing.gvsu.edu/afienkod/cis367/hw2/" name="Interactive Triangle" />
+						<ProjectLink link="https://student.computing.gvsu.edu/afienkod/cis367/hw2/" name="Interactive Triangles" />
+						<ProjectLink link="https://student.computing.gvsu.edu/afienkod/cis367/hw3/" name="Gasket (Extended)" />
 					</ul>
 				</div>
 			

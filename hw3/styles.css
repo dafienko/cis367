@@ -8,9 +8,10 @@ canvas {
 	width: 20px;
 	height: 20px;
 	z-index: 10;
-	background-color: blue;
 	cursor: pointer;
 	transform: translate(-10px, -10px);
+	
+	background-color: rgb(255, 255, 255);
 }
 
 .anchor-point:hover {
@@ -32,4 +33,14 @@ canvas {
 #anchor3 {
 	top: 90%;
 	left: 75%;
+}
+
+#iterations-line {
+	* {
+		display: inline;
+	}
+
+	p {
+		color: white;
+	}
 }
