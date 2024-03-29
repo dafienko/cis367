@@ -19,6 +19,7 @@ function App() {
 						<ProjectLink link="https://student.computing.gvsu.edu/afienkod/cis367/hw2/" name="Interactive Triangles" />
 						<ProjectLink link="https://student.computing.gvsu.edu/afienkod/cis367/hw3/" name="Gasket (Extended)" />
 						<ProjectLink link="https://student.computing.gvsu.edu/afienkod/cis367/hw4/" name="Three.js" />
+						<ProjectLink link="https://student.computing.gvsu.edu/afienkod/cis367/pixi/" name="PixiJS" />
 					</ul>
 				</div>
 			
